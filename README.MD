@@ -55,9 +55,8 @@ Once the application is running, you can interact with the Plant Growth Monitori
 The project's folder structure is organized as follows:
 
 - `app.py`: The main application file that initializes the Streamlit app and connects the Model and View components.
-- `model/`: Contains the modules responsible for data processing, descriptive analytics, and predictive analytics.
-- `view/`: Includes the Streamlit scripts that define the different pages and visualizations for the dashboard.
-- `data/`: Contains sample data or instructions on how to import and organize your plant growth data.
+- `models/`: Contains the modules responsible for data processing, descriptive analytics, and predictive analytics.
+- `views/`: Includes the Streamlit scripts that define the different pages and visualizations for the dashboard.
 - `datasets/`: Includes datasets for the Model component.
 
 ## Contributing
