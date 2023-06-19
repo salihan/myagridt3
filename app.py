@@ -63,4 +63,33 @@ if __name__ == '__main__':
         page_icon=':rocket:'
     )
 
+    hide_menu_style = """
+            <style>
+            #MainMenu {visibility: hidden; }
+            footer {visibility: hidden;}
+            </style>
+            """
+    st.markdown(hide_menu_style, unsafe_allow_html=True)
+    st.markdown("""
+            <style>
+                   .css-1544g2n {
+                      margin-top: -75px;
+                    }      
+                    .css-6wvkk3 {
+                      margin-top: -75px;
+                    }          
+                   .block-container {
+                        padding-top: 2rem;
+                        padding-bottom: 0rem;
+                        padding-left: 2rem;
+                        padding-right: 2rem;
+                    }
+            </style>
+            """, unsafe_allow_html=True)
+
+    set_page_container_style(
+        max_width=1100, max_width_100_percent=True,
+        padding_top=0, padding_right=10, padding_left=5, padding_bottom=10
+    )
+
     main()
