@@ -5,9 +5,10 @@ import folium
 from annotated_text import annotated_text, annotation
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 import random
 from st_aggrid import AgGrid
-import streamlit.components.v1 as components
+from PIL import Image
 
 class RiceView:
     def __init__(self, rice_model):
@@ -16,28 +17,117 @@ class RiceView:
     def render(self):
         df_raw_rice = self.rice_model.get_data()
         totplot = df_raw_rice['Plot'].nunique()
-        selected_week = st.sidebar.selectbox("Select Week", df_raw_rice['week'].unique())
+        print(df_raw_rice.columns)
 
-        df_rice = df_raw_rice[df_raw_rice['week'] == selected_week]
+        # selected_week = st.sidebar.selectbox("Select Week", df_raw_rice['week'].unique())
+        # df_rice = df_raw_rice[df_raw_rice['week'] == selected_week]
+        # Get unique weeks from the dataframe
+        unique_weeks = df_raw_rice['week'].unique()
+
+        # Add "All Weeks" as the default option at the beginning
+        unique_weeks = ["All Weeks"] + list(unique_weeks)
+
+        # Create the select box with the default option set to "All Weeks"
+        selected_week = st.sidebar.selectbox("Select Week", unique_weeks)
+
+        # Filter the dataframe based on the selected week
+        if selected_week == "All Weeks":
+            df_rice = df_raw_rice  # Show all data
+        else:
+            df_rice = df_raw_rice[df_raw_rice['week'] == selected_week]  # Filter data by selected week
 
         cc = st.columns([1,2])
         with cc[0]:
-            annotated_text("", annotation("Size: 2 ha", "", font_family="Comic Sans MS", border="2px solid green"),
-                           "", annotation(f"Total Plot: **{totplot}**", "", font_family="Comic Sans MS", border="2px solid green"), )
-            st.markdown("""
-                    <style>
-                    [data-testid=column]:nth-of-type(1) [data-testid=stVerticalBlock]{
-                        gap: 0rem;
-                    }
-                    </style>
-                    """,unsafe_allow_html=True)
-            annotated_text("Avg. Plant Height: ", ("120", "cm", "#8ef"),)
-            annotated_text("Avg. No. of Tiller: ", ("10", "", "#afa"), )
-            annotated_text("Avg. No. of Unfilled Grain: ", ("504", ""), )
+            image = Image.open('assets/padi.jpeg')
+            st.image(image.resize((400, 300)), caption="Rice with sufficient nutrients")
+            ccc = st.columns(2)
+            with ccc[0]:
+                annotated_text("", annotation("Size: 2 ha", "", font_family="Comic Sans MS", border="2px solid green"),
+                               "", annotation(f"Total Plot: **{totplot}**", "", font_family="Comic Sans MS",
+                                              border="2px solid green"), )
+                st.markdown("""
+                                    <style>
+                                    [data-testid=column]:nth-of-type(1) [data-testid=stVerticalBlock]{
+                                        gap: 0.5rem;
+                                    }
+                                    </style>
+                                    """, unsafe_allow_html=True)
+                annotated_text("Avg. Plant Height: ", ("120", "cm", "#8ef"), )
+                annotated_text("Avg. No. of Tiller: ", ("10", "", "#afa"), )
+                annotated_text("Avg. No. of Unfilled Grain: ", ("504", ""), )
+
+            with ccc[1]:
+                annotated_text("",
+                               annotation("Yield Goal: 50", "kg", font_family="Comic Sans MS", border="2px solid #8FD834"),
+                               "", annotation("Estimated Yield: 45", "kg", font_family="Comic Sans MS",
+                                              border="2px solid #72CC50"), )
+                st.metric("Yield", "45 kg", "-5 kg")
+
 
         with cc[1]:
-            annotated_text("", annotation("Yield Goal: 50", "kg", font_family="Comic Sans MS", border="2px solid #8FD834"),
-                           "", annotation("Estimated Yield: 45", "kg", font_family="Comic Sans MS", border="2px solid #72CC50"), )
+
+            # Create a dataframe with WeightGrain distribution over Plot and SubPlot
+            df_weight_grain = df_rice.groupby(['Plot', 'SubPlot'])['WeightGrain'].mean().reset_index()
+
+            # # Create the WeightGrain distribution chart
+            # fig = px.bar(df_weight_grain, x='Plot', y='WeightGrain', color='SubPlot',
+            #              labels={'WeightGrain': 'Weight Grain', 'Plot': 'Plot', 'SubPlot': 'SubPlot'},)
+            #
+            # # Change the color theme
+            # # fig.update_traces(marker_color=px.colors.sequential.Viridis)
+            # fig.update_layout(height=300, margin=dict(l=0, r=10, t=30, b=0), font=dict(size=10, color="RebeccaPurple"))
+            # Combine Plot and SubPlot labels for x-axis
+            df_weight_grain['x_labels'] = df_weight_grain['Plot'].astype(str) + '-' + df_weight_grain['SubPlot'].astype(
+                str)
+
+            # Create a bar chart for each SubPlot within each Plot
+            fig = go.Figure()
+
+            for plot in df_weight_grain['Plot'].unique():
+                df_plot = df_weight_grain[df_weight_grain['Plot'] == plot]
+                fig.add_trace(go.Bar(x=df_plot['x_labels'], y=df_plot['WeightGrain'], name=f'Plot {plot}'))
+
+            # Customize the chart layout
+            fig.update_layout(
+                barmode='group',
+                xaxis_title='Plot-SubPlot',
+                yaxis_title='Weight Grain',
+                showlegend=True
+            )
+
+            # Set the default expander state to expanded
+            expander = st.expander("WeightGrain Distribution", expanded=True)
+
+            # Display the chart inside the expander
+            with expander:
+                st.plotly_chart(fig)
+
+            # Create a dataframe with soil nutrient data over Plot
+            df_soil_nutrients = df_rice.groupby('Plot')[['N', 'K', 'Mg', 'Ca']].mean().reset_index()
+
+            # Create a bar chart for soil nutrient data
+            fig2 = go.Figure()
+
+            for nutrient in ['N', 'K', 'Mg', 'Ca']:
+                fig2.add_trace(go.Bar(x=df_soil_nutrients['Plot'], y=df_soil_nutrients[nutrient], name=nutrient))
+
+            # Customize the chart layout
+            fig2.update_layout(
+                barmode='group',
+                xaxis_title='Plot',
+                yaxis_title='Soil Nutrient Level',
+                title='Soil Nutrients over Plot',
+                showlegend=True
+            )
+
+            # Set the default expander state to expanded
+            expander = st.expander("Soil Nutrients")
+
+            # Display the chart inside the expander
+            with expander:
+                st.plotly_chart(fig2)
+
+
             data = pd.DataFrame({
                 'Plot': ['1', '2', '3', '4', '5', '6', '7', '8'],
                 'Yield': [8.5, 7.2, 6.8, 9.1, 10.1, 11.2, 12.3, 14.4],
