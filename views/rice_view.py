@@ -96,7 +96,7 @@ class RiceView:
             )
 
             # Set the default expander state to expanded
-            expander = st.expander("WeightGrain Distribution", expanded=True)
+            expander = st.expander("WeightGrain Mean Distribution", expanded=True)
 
             # Display the chart inside the expander
             with expander:
@@ -121,7 +121,7 @@ class RiceView:
             )
 
             # Set the default expander state to expanded
-            expander = st.expander("Soil Nutrients")
+            expander = st.expander("Soil Nutrients Mean")
 
             # Display the chart inside the expander
             with expander:
