@@ -176,43 +176,46 @@ class RiceView:
         tab1, tab2, tab3, tab4  = st.tabs(["All Data :seedling:", "Plot at Risk :camping:",  "Growth :chart:", "teest"])
 
         with tab1:
-            average_weight_grain = df_rice.groupby('Plot')['WeightGrain'].mean().reset_index()
+            col = st.columns([1,2])
+            with col[0]:
+                average_weight_grain = df_rice.groupby('Plot')['WeightGrain'].mean().reset_index()
 
-            # Function to determine 'at_risk' based on average weight grain
-            def determine_risk(weight_grain):
-                if weight_grain < 3.0:
-                    return 'high risk'
-                elif weight_grain > 3.0 and weight_grain < 4.0:
-                    return 'no'
-                else:
-                    return 'low'
+                # Function to determine 'at_risk' based on average weight grain
+                def determine_risk(weight_grain):
+                    if weight_grain < 3.0:
+                        return 'high risk'
+                    elif weight_grain > 3.0 and weight_grain < 4.0:
+                        return 'no'
+                    else:
+                        return 'low'
 
-            # Apply the function to add 'at_risk' column
-            average_weight_grain['at_risk'] = average_weight_grain['WeightGrain'].apply(determine_risk)
+                # Apply the function to add 'at_risk' column
+                average_weight_grain['at_risk'] = average_weight_grain['WeightGrain'].apply(determine_risk)
 
-            # Display the result with styling
-            styled_average_weight_grain = average_weight_grain.style.apply(
-                lambda row: [
-                    'color: red' if row['at_risk'] == 'high risk'
-                    else 'color: green' if row['at_risk'] == 'no' else 'color: blue'
-                    for _ in row
-                ], axis=1
-            )
+                # Display the result with styling
+                styled_average_weight_grain = average_weight_grain.style.apply(
+                    lambda row: [
+                        'color: red' if row['at_risk'] == 'high risk'
+                        else 'color: green' if row['at_risk'] == 'no' else 'color: blue'
+                        for _ in row
+                    ], axis=1
+                )
 
-            # Display the styled DataFrame
-            st.dataframe(styled_average_weight_grain)
+                # Display the styled DataFrame
+                st.dataframe(styled_average_weight_grain)
 
-            # Allow the user to select a plot
-            selected_plot = st.selectbox("Select a plot:", average_weight_grain['Plot'])
+            with col[1]:
+                # Allow the user to select a plot
+                selected_plot = st.selectbox("Select a plot:", average_weight_grain['Plot'])
 
-            # Check if a plot is selected
-            if selected_plot:
-                # Filter the df_rice DataFrame for the selected plot
-                selected_data = df_rice[df_rice['Plot'] == selected_plot][
-                    ['plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet', 'NoOfFilledGrain']]
+                # Check if a plot is selected
+                if selected_plot:
+                    # Filter the df_rice DataFrame for the selected plot
+                    selected_data = df_rice[df_rice['Plot'] == selected_plot][
+                        ['SubPlot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet', 'NoOfFilledGrain']]
 
-                # Display the selected data
-                st.write(selected_data)
+                    # Display the selected data
+                    st.write(selected_data)
 
         with tab2:
             df_risk = average_weight_grain[average_weight_grain['at_risk'] == 'high risk']
