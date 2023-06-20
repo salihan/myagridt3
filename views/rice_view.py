@@ -17,7 +17,7 @@ class RiceView:
     def render(self):
         df_raw_rice = self.rice_model.get_data()
         totplot = df_raw_rice['Plot'].nunique()
-        print(df_raw_rice.columns)
+        # print(df_raw_rice.columns)
 
         # selected_week = st.sidebar.selectbox("Select Week", df_raw_rice['week'].unique())
         # df_rice = df_raw_rice[df_raw_rice['week'] == selected_week]
