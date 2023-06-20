@@ -206,7 +206,7 @@ class RiceView:
 
             with col[1]:
                 # Allow the user to select a plot
-                selected_plot = st.selectbox("Select a plot:", average_weight_grain['Plot'])
+                selected_plot = st.selectbox("Select a plot to see subplots:", average_weight_grain['Plot'])
 
                 # Check if a plot is selected
                 if selected_plot:
