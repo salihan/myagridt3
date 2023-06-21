@@ -206,16 +206,23 @@ class RiceView:
 
             with col[1]:
                 # Allow the user to select a plot
-                selected_plot = st.selectbox("Select a plot to see subplots:", average_weight_grain['Plot'])
+                selected_plot = st.selectbox("Select a plot to see subplots:",
+                                             ['All Plots'] + average_weight_grain['Plot'].tolist())
 
                 # Check if a plot is selected
-                if selected_plot:
+                if selected_plot and selected_plot != 'All Plots':
                     # Filter the df_rice DataFrame for the selected plot
                     selected_data = df_rice[df_rice['Plot'] == selected_plot][
-                        ['SubPlot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet', 'NoOfFilledGrain']]
+                        ['SubPlot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet',
+                         'NoOfFilledGrain']]
+                else:
+                    # Display data for all plots
+                    selected_data = df_rice[
+                        ['Plot', 'SubPlot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet',
+                         'NoOfFilledGrain']]
 
-                    # Display the selected data
-                    st.write(selected_data)
+                # Display the selected data
+                st.write(selected_data)
 
         with tab2:
             df_risk = average_weight_grain[average_weight_grain['at_risk'] == 'high risk']
