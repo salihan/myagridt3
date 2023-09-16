@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import random
 from st_aggrid import AgGrid
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 from PIL import Image
 
 class RiceView:
@@ -173,7 +174,7 @@ class RiceView:
                 st.plotly_chart(fig)
 
 
-        tab1, tab2, tab3, tab4  = st.tabs(["All Data :seedling:", "Plot at Risk :camping:",  "Growth :chart:", "teest"])
+        tab1, tab2, tab3  = st.tabs(["All Data :seedling:", "Plot at Risk :camping:",  "Growth :chart:"])
 
         with tab1:
             col = st.columns([1,2])
@@ -223,6 +224,11 @@ class RiceView:
 
                 # Display the selected data
                 st.write(selected_data)
+                # gb = GridOptionsBuilder.from_dataframe(selected_data)
+                # gb.configure_pagination(enabled=True, paginationAutoPageSize=True, paginationPageSize=10)
+                # gridOptions = gb.build()
+                # AgGrid(selected_data, gridOptions=gridOptions, fit_columns_on_grid_load=True)
+
 
         with tab2:
             df_risk = average_weight_grain[average_weight_grain['at_risk'] == 'high risk']
@@ -283,51 +289,51 @@ class RiceView:
                 plt.xticks(rotation=45)
                 st.pyplot(plt)
 
-        with tab4:
-            st.write('tab4')
-            # Group the data by 'Plot' and calculate the mean of 'WeightGrain'
-            average_weight_grain = df_rice.groupby('Plot')['WeightGrain'].mean().reset_index()
-
-            # Function to determine 'at_risk' based on average weight grain
-            def determine_risk(weight_grain):
-                if weight_grain < 3.0:
-                    return 'high risk'
-                elif weight_grain > 3.0 and weight_grain < 4.0:
-                    return 'no'
-                else:
-                    return 'low'
-
-            # Apply the function to add 'at_risk' column
-            average_weight_grain['at_risk'] = average_weight_grain['WeightGrain'].apply(determine_risk)
-
-            # Display the result with styling
-            styled_data = average_weight_grain.style.apply(
-                lambda row: [
-                    'color: red' if row['at_risk'] == 'high risk'
-                    else 'color: green' if row['at_risk'] == 'no' else 'color: blue'
-                    for _ in row
-                ], axis=1
-            )
-
-            # Convert the styled DataFrame to a regular DataFrame
-            data = pd.DataFrame(styled_data.data)
-
-            # Display the DataFrame using ag-Grid
-            grid_result = AgGrid(data, fit_columns_on_grid_load=True)
-
-            # Get the selected rows from the grid_result object
-            selected_rows = grid_result['selected_rows']
-
-            # Get the selected plots
-            selected_plots = [row['Plot'] for row in selected_rows]
-
-            # Filter the df_rice DataFrame for the selected plots
-            filtered_data = df_rice[df_rice['Plot'].isin(selected_plots)]
-
-            # Display the additional information for the selected plots
-            if len(filtered_data) > 0:
-                st.subheader("Additional Information for Selected Plots")
-                st.dataframe(filtered_data[['Plot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet',
-                                            'NoOfFilledGrain']])
-            else:
-                st.info("No data available for the selected plots.")
+        # with tab4:
+        #     st.write('tab4')
+        #     # Group the data by 'Plot' and calculate the mean of 'WeightGrain'
+        #     average_weight_grain = df_rice.groupby('Plot')['WeightGrain'].mean().reset_index()
+        #
+        #     # Function to determine 'at_risk' based on average weight grain
+        #     def determine_risk(weight_grain):
+        #         if weight_grain < 3.0:
+        #             return 'high risk'
+        #         elif weight_grain > 3.0 and weight_grain < 4.0:
+        #             return 'no'
+        #         else:
+        #             return 'low'
+        #
+        #     # Apply the function to add 'at_risk' column
+        #     average_weight_grain['at_risk'] = average_weight_grain['WeightGrain'].apply(determine_risk)
+        #
+        #     # Display the result with styling
+        #     styled_data = average_weight_grain.style.apply(
+        #         lambda row: [
+        #             'color: red' if row['at_risk'] == 'high risk'
+        #             else 'color: green' if row['at_risk'] == 'no' else 'color: blue'
+        #             for _ in row
+        #         ], axis=1
+        #     )
+        #
+        #     # Convert the styled DataFrame to a regular DataFrame
+        #     data = pd.DataFrame(styled_data.data)
+        #
+        #     # Display the DataFrame using ag-Grid
+        #     grid_result = AgGrid(data, fit_columns_on_grid_load=True)
+        #
+        #     # Get the selected rows from the grid_result object
+        #     selected_rows = grid_result['selected_rows']
+        #
+        #     # Get the selected plots
+        #     selected_plots = [row['Plot'] for row in selected_rows]
+        #
+        #     # Filter the df_rice DataFrame for the selected plots
+        #     filtered_data = df_rice[df_rice['Plot'].isin(selected_plots)]
+        #
+        #     # Display the additional information for the selected plots
+        #     if len(filtered_data) > 0:
+        #         st.subheader("Additional Information for Selected Plots")
+        #         st.dataframe(filtered_data[['Plot', 'plantHeight', 'NoOfTiller', 'NoOfPanicle', 'SPAD', 'NoOfSpikelet',
+        #                                     'NoOfFilledGrain']])
+        #     else:
+        #         st.info("No data available for the selected plots.")
