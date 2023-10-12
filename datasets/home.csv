@@ -1,7 +1,7 @@
-﻿Crop name,Size,Timeline,Actual yield,Yield goal,Estimated Yield,Recommendation,Explanation
-Rice,2 ha,24-Sep,80kg,500,430,"Increase N by 20%, P by 20%, K by 10%","SPAD is 80% lower than ideal, spikelet"
-Pak choy,2 containers,4-Mar,15kg,30,25,"Increase N by 20%, P by 20%, K by 10% and maintain EC to 15",
-Eucalyptus,1 ha,15/50,,5,5,,
-Aqua,3 ponds,Aug-36,5kg,100,85,,
-Rice,3 ha,18/24,140kg,400,300,,
-Pak choy,2 containers,4-Jan,~0 kg,30,10,,
+Farm_No,Crop name,Size,Timeline,Actual yield,Yield goal,Estimated Yield,Recommendation,Explanation,image,mapabove
+1,Rice,2 ha,24-Sep,80kg,500,430,"Increase N by 20%, P by 20%, K by 10%","SPAD is 80% lower than ideal, spikelet",padi.jpeg,farm1.png
+2,Pak choy,2 containers,4-Mar,15kg,30,25,"Increase N by 20%, P by 20%, K by 10% and maintain EC to 15",,,
+3,Eucalyptus,1 ha,15/50,,5,5,,,,
+4,Aqua,3 ponds,Aug-36,5kg,100,85,,,,
+5,Rice,3 ha,18/24,140kg,400,300,,,,
+6,Pak choy,2 containers,4-Jan,~0 kg,30,10,,,,

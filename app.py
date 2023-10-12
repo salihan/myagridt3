@@ -2,21 +2,23 @@
 
 from models.user_model import UserModel
 from models.home_model import HomeModel
-from models.rice_model import RiceModel
+# from models.rice_model import RiceModel
 from views.login_view import LoginView
 from views.home_view import HomeView
-from views.rice_view import RiceView
+# from views.rice_view import RiceView
+from views.report_view import ReportView
 import streamlit as st
 
 # Instantiate models
 user_model = UserModel("admin", "password")
 home_model = HomeModel()
-rice_model = RiceModel()
+# rice_model = RiceModel()
 
 # Instantiate views
 login_view = LoginView(user_model)
 home_view = HomeView(home_model)
-rice_view = RiceView(rice_model)
+# rice_view = RiceView(rice_model)
+report_view = ReportView(home_model)
 
 
 # Set up Streamlit app
@@ -38,29 +40,30 @@ def main():
         # Highlight the selected button
         selected_button = st.sidebar.radio(
             "Navigation",
-            ("Home", "Rice Dashboard")
+            ("🏠Home", "🌾Report", "📋Action Plan")
         )
 
         # Render views based on the selected button
-        if selected_button == "Home":
+        if selected_button == "🏠Home":
             # Apply style for the selected button
             st.markdown(
                 '<style>.css-1m8ugwa-Button:nth-child(1){background-color: #f63366 !important; color: white;}</style>',
                 unsafe_allow_html=True)
             home_view.render()
-        elif selected_button == "Rice Dashboard":
+        elif selected_button == "🌾Report":
             # Apply style for the selected button
             st.markdown(
                 '<style>.css-1m8ugwa-Button:nth-child(2){background-color: #f63366 !important; color: white;}</style>',
                 unsafe_allow_html=True)
-            rice_view.render()
+            # rice_view.render()
+            report_view.render()
 
 
 if __name__ == '__main__':
     st.set_page_config(
         page_title='MyAgriDt',
         layout='wide',
-        page_icon=':rocket:'
+        page_icon='🥦'
     )
 
     hide_menu_style = """
