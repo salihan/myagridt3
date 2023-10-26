@@ -93,7 +93,9 @@ class Home2View:
         if not df_filtersubpot_pakchoi.empty:
             # Convert the columns to numeric
             numeric_columns = ['Leaves Count', 'Longest Leaf', 'Plant Height(mm)', 'pH', 'EC']
-            df_filtersubpot_pakchoi[numeric_columns] = df_filtersubpot_pakchoi[numeric_columns].apply(pd.to_numeric)
+            # df_filtersubpot_pakchoi[numeric_columns] = df_filtersubpot_pakchoi[numeric_columns].apply(pd.to_numeric)
+            df_filtersubpot_pakchoi.loc[:, numeric_columns] = df_filtersubpot_pakchoi.loc[:, numeric_columns].apply(
+                pd.to_numeric)
 
             initial_data = df_filtersubpot_pakchoi[numeric_columns].iloc[0]
             latest_data = df_filtersubpot_pakchoi[numeric_columns].iloc[-1]
