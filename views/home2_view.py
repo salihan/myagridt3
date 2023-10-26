@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from models.rice_model import RiceModel
 from models.pakchoi_model import PakchoiModel
+import plotly.graph_objects as go
 
 rice_model = RiceModel()
 pakchoi_model = PakchoiModel()
@@ -34,9 +35,22 @@ class Home2View:
         st.title('Farms')
 
         data = self.home_model2.get_actual_data()
-
         df_home = pd.DataFrame(data)
-        st.dataframe(df_home.iloc[:, 0:5])
+
+        column = st.columns(2)
+        with column[0]:
+            st.dataframe(df_home.iloc[:, 0:5])
+        with column[1]:
+            # Coordinates
+            latitude = 2.992193566444384
+            longitude = 101.72348426648746
+            # latlong = pd.DataFrame({'LAT': [latitude], 'LON': [longitude]})
+            # st.map(latlong)
+            # Define the iframe HTML
+            map_html = f'<iframe width="100%" height="350" src="https://www.openstreetmap.org/export/embed.html?bbox={longitude},{latitude},{longitude},{latitude}&layer=mapnik" frameborder="0"></iframe>'
+            expander = st.expander("Farm Location", expanded=False)
+            with expander:
+                st.write(map_html, unsafe_allow_html=True)
 
         # ---------------------------
         def dataframe_with_selections(df):
@@ -95,6 +109,51 @@ class Home2View:
             #--- loc -2 temporary because I spotted empty value for the latest data especially these two ---
             col11.metric("pH", f"{df_filtersubpot_pakchoi['pH'].iloc[-2]}")
             col22.metric("EC", f"{df_filtersubpot_pakchoi['EC'].iloc[-2]}")
+
+            col111, col222 = st.columns(2)
+            with col111:
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Plant Height(mm)'], name='Plant Height', mode='lines',
+                                         line=dict(color='blue')))
+                fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Longest Leaf'], name='Longest Leaf', mode='lines',
+                                         line=dict(color='green'), yaxis='y2'))
+
+                fig.update_layout(
+                    title='Plant Height and Longest Leaf (mm) Progress',
+                    xaxis_title='Date',
+                    yaxis_title='Plant Height',
+                    yaxis2=dict(
+                        title='Longest Leaf',
+                        overlaying='y',
+                        side='right'
+                    )
+                )
+                st.plotly_chart(fig)
+
+            with col222:
+                # st.line_chart(df_filtersubpot_pakchoi, x='Date', y=['pH', 'EC'])
+                fig2 = go.Figure()
+                fig2.add_trace(
+                    go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['pH'],
+                               name='pH', mode='lines',
+                               line=dict(color='orange')))
+                fig2.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['EC'],
+                                         name='EC', mode='lines',
+                                         line=dict(color='purple'), yaxis='y2'))
+
+                fig2.update_layout(
+                    title='pH and EC Over Time',
+                    xaxis_title='Date',
+                    yaxis_title='pH',
+                    yaxis2=dict(
+                        title='EC',
+                        overlaying='y',
+                        side='right'
+                    )
+                )
+                st.plotly_chart(fig2)
+
+
         else:
             st.write("No data available for the selected SubPot.")
 

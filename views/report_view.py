@@ -33,7 +33,8 @@ class ReportView:
         elif selected_farm_name.strip() == "Pok Choy Hydroponics":
             st.subheader("Farm 2: Pak Choy")
             df_pakchoi = pakchoi_model.get_actual_data()
-            df_pakchoi['Date'] = pd.to_datetime(df_pakchoi['Date'], format='%d/%m/%Y')
+            df_pakchoi['Date'] = pd.to_datetime(df_pakchoi['Date'], format='%d/%m/%Y', errors='coerce')
+            # st.write(df_pakchoi)
             select_pot = st.selectbox("Select Pot", df_pakchoi['Pot'].unique())
             df_filterpot_pakchoi = df_pakchoi[df_pakchoi['Pot'] == select_pot]
             select_subpot = st.selectbox("Select SubPot", df_filterpot_pakchoi['SubPot'].unique())
@@ -41,7 +42,8 @@ class ReportView:
 
 
             df_target = pakchoi_model.get_target_data()
-            df_target['Date'] = pd.to_datetime(df_target['Date'], format='%d/%m/%Y')
+            df_target['Date'] = pd.to_datetime(df_target['Date'], format='%d/%m/%Y', errors='coerce')
+            st.write(df_target)
             df_filterpot_target = df_target[df_target['Pot'] == select_pot]
             df_filtersubpot_target = df_filterpot_target[df_filterpot_target['SubPot'] == select_subpot]
             # Calculate the average pH
@@ -49,7 +51,7 @@ class ReportView:
             average_EC = df_filtersubpot_pakchoi['EC'].mean()
 
             df_prediction = pakchoi_model.get_prediction_data()
-            df_prediction['Date'] = pd.to_datetime(df_prediction['Date'], format='%d/%m/%Y')
+            df_prediction['Date'] = pd.to_datetime(df_prediction['Date'], format='%d/%m/%Y', errors='coerce')
             df_filterpot_prediction = df_prediction[df_prediction['Pot'] == select_pot]
             df_filtersubpot_prediction = df_filterpot_prediction[df_filterpot_prediction['SubPot'] == select_subpot]
 
