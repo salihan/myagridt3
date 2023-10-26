@@ -110,6 +110,9 @@ class Home2View:
             col11.metric("pH", f"{df_filtersubpot_pakchoi['pH'].iloc[-2]}")
             col22.metric("EC", f"{df_filtersubpot_pakchoi['EC'].iloc[-2]}")
 
+            df_filtersubpot_pakchoi['Date'] = pd.to_datetime(df_filtersubpot_pakchoi['Date'], format='%d/%m/%Y', errors='coerce',
+                                                infer_datetime_format=True)
+
             col111, col222 = st.columns(2)
             with col111:
                 fig = go.Figure()
