@@ -1,29 +1,24 @@
 # app.py
 
 from models.user_model import UserModel
-# from models.home_model import HomeModel
 from models.pakchoi_model import PakchoiModel
-# from models.rice_model import RiceModel
 from views.login_view import LoginView
-# from views.home_view import HomeView
 from models.home_model2 import HomeModel2
 from views.home2_view import Home2View
-# from views.rice_view import RiceView
 from views.report_view import ReportView
+from views.farm_view import FarmView
 import streamlit as st
 
 # Instantiate models
 user_model = UserModel("admin", "password")
-# home_model = HomeModel()
 home_model2 = HomeModel2()
-# rice_model = RiceModel()
 pakchoi_model = PakchoiModel()
 
 # Instantiate views
 login_view = LoginView(user_model)
 home2_view = Home2View(home_model2)
-# rice_view = RiceView(rice_model)
 report_view = ReportView(home_model2)
+farm_view = FarmView()
 
 
 # Set up Streamlit app
@@ -45,23 +40,25 @@ def main():
         # Highlight the selected button
         selected_button = st.sidebar.radio(
             "Navigation",
-            ("🏠Home", "🌾Report", "📋Action Plan")
+            ("🏠Home", "🌾Report", "📋Action Plan", "⚡Live")
         )
 
         # Render views based on the selected button
         if selected_button == "🏠Home":
-            # Apply style for the selected button
             st.markdown(
                 '<style>.css-1m8ugwa-Button:nth-child(1){background-color: #f63366 !important; color: white;}</style>',
                 unsafe_allow_html=True)
             home2_view.render()
         elif selected_button == "🌾Report":
-            # Apply style for the selected button
             st.markdown(
                 '<style>.css-1m8ugwa-Button:nth-child(2){background-color: #f63366 !important; color: white;}</style>',
                 unsafe_allow_html=True)
-            # rice_view.render()
             report_view.render()
+        elif selected_button == "⚡Live":
+            st.markdown(
+                '<style>.css-1m8ugwa-Button:nth-child(2){background-color: #f63366 !important; color: white;}</style>',
+                unsafe_allow_html=True)
+            farm_view.render()
 
 
 if __name__ == '__main__':
