@@ -84,13 +84,13 @@ class ReportView:
             fig.update_xaxes(title_text='Date')
             fig.update_yaxes(title_text='Plant Height(mm)')
             fig.update_layout(title='Plant Height Comparison', width=800)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
             fig2.update_xaxes(title_text='Date')
             fig2.update_yaxes(title_text='Leaves Count')
             fig2.update_layout(title='Leaves Count Comparison', width=800)
-            st.plotly_chart(fig2)
+            st.plotly_chart(fig2, use_container_width=True)
 
         with tab3:
             col = st.columns([1, 2])
@@ -112,13 +112,13 @@ class ReportView:
                     }
                 ))
                 speedometer_ph.update_layout(height=400, width=300)
-                st.plotly_chart(speedometer_ph)
+                st.plotly_chart(speedometer_ph, use_container_width=True)
 
             with col[1]:
                 fig3.update_xaxes(title_text='Date')
                 fig3.update_yaxes(title_text='pH')
                 fig3.update_layout(title='pH Comparison')
-                st.plotly_chart(fig3)
+                st.plotly_chart(fig3, use_container_width=True)
 
         with tab4:
             col = st.columns([1, 2])
@@ -140,10 +140,10 @@ class ReportView:
                     }
                 ))
                 speedometer_EC.update_layout(height=400, width=300)
-                st.plotly_chart(speedometer_EC)
+                st.plotly_chart(speedometer_EC, use_container_width=True)
 
             with col[1]:
                 fig4.update_xaxes(title_text='Date')
                 fig4.update_yaxes(title_text='EC')
                 fig4.update_layout(title='EC Comparison')
-                st.plotly_chart(fig4)
+                st.plotly_chart(fig4, use_container_width=True)

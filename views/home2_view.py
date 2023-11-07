@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from models.rice_model import RiceModel
 from models.pakchoi_model import PakchoiModel
+from models.farm_model import get_telemetries
 import plotly.graph_objects as go
 
 rice_model = RiceModel()
@@ -36,84 +37,173 @@ class Home2View:
 
         data = self.home_model2.get_actual_data()
         df_home = pd.DataFrame(data)
+        st.dataframe(df_home.iloc[:, 0:5])
 
-        column = st.columns(2)
-        with column[0]:
-            st.dataframe(df_home.iloc[:, 0:5])
-        with column[1]:
-            # Coordinates
-            latitude = 2.992193566444384
-            longitude = 101.72348426648746
-            # latlong = pd.DataFrame({'LAT': [latitude], 'LON': [longitude]})
-            # st.map(latlong)
-            # Define the iframe HTML
-            map_html = f'<iframe width="100%" height="350" src="https://www.openstreetmap.org/export/embed.html?bbox={longitude},{latitude},{longitude},{latitude}&layer=mapnik" frameborder="0"></iframe>'
-            expander = st.expander("Farm Location", expanded=False)
-            with expander:
-                st.write(map_html, unsafe_allow_html=True)
+        st.markdown("""
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+                    """, unsafe_allow_html=True)
 
-        # ---------------------------
-        def dataframe_with_selections(df):
-            df_with_selections = df.copy()
-            df_with_selections.insert(0, "Select", False)
-            edited_df = st.data_editor(
-                df_with_selections,
-                hide_index=True,
-                column_config={"Select": st.column_config.CheckboxColumn(required=True)},
-                disabled=df.columns,
-            )
-            selected_indices = list(np.where(edited_df.Select)[0])
-            selected_rows = df[edited_df.Select]
-            return {"selected_rows_indices": selected_indices, "selected_rows": selected_rows}
-
-        # selection = dataframe_with_selections(df_home)
-        # st.write("Your selection:")
-        # st.write(selection)
-        # ---------------------------
-
+        st.divider()
         farm_names = df_home["Farm Name"].tolist()
-        col = st.columns(3)
-        with col[0]:
-            selected_farm = st.selectbox('Farm Name:', farm_names)
-            df_selected_farm = df_home[df_home["Farm Name"] == selected_farm]
-            if selected_farm == "Pok Choy Hydroponics":
-                with col[1]:
-                    df_pakchoi = pd.DataFrame(pakchoi_model.get_actual_data())
-                    # df_pakchoi = df_pakchoi.rename(columns=df_pakchoi.iloc[0]).drop(df_pakchoi.index[0])
-                    # st.write(df_pakchoi)
-                    select_pot = st.selectbox("Select Pot", df_pakchoi['Pot'].unique())
-                with col[2]:
-                    df_filterpot_pakchoi = df_pakchoi[df_pakchoi['Pot'] == select_pot]
-                    select_subpot = st.selectbox("Select SubPot", df_filterpot_pakchoi['SubPot'].unique())
-                    df_filtersubpot_pakchoi = df_filterpot_pakchoi[df_filterpot_pakchoi['SubPot'] == select_subpot]
-        # st.write(df_filtersubpot_pakchoi)
-        st.subheader("Growth Information:")
-        col1, col2, col3 = st.columns(3)
+        selected_farm = st.selectbox('Farm Name:', farm_names)
+        df_selected_farm = df_home[df_home["Farm Name"] == selected_farm]
 
-        if not df_filtersubpot_pakchoi.empty:
-            # Convert the columns to numeric
-            numeric_columns = ['Leaves Count', 'Longest Leaf', 'Plant Height(mm)', 'pH', 'EC']
-            # df_filtersubpot_pakchoi[numeric_columns] = df_filtersubpot_pakchoi[numeric_columns].apply(pd.to_numeric)
-            df_filtersubpot_pakchoi.loc[:, numeric_columns] = df_filtersubpot_pakchoi.loc[:, numeric_columns].apply(
-                pd.to_numeric)
+        #for now we hardcode this since only pakchoi data is available
+        if selected_farm == "Pok Choy Hydroponics":
+            df_pakchoi = pd.DataFrame(pakchoi_model.get_actual_data())
+            bil_pot = len(df_pakchoi['Pot'].unique())
+            bil_subpot = len(df_pakchoi['SubPot'].unique())
+            bil_crop = bil_subpot * bil_pot
+            plant_height_mean = df_pakchoi['Plant Height(mm)'].mean()
+            longest_leaves_mean = df_pakchoi['Longest Leaf'].mean()
+            leaves_count_mean = df_pakchoi['Leaves Count'].mean()
 
-            initial_data = df_filtersubpot_pakchoi[numeric_columns].iloc[0]
-            latest_data = df_filtersubpot_pakchoi[numeric_columns].iloc[-1]
+            # Pot1
+            df_pakchoi_pot1 = df_pakchoi[df_pakchoi['Pot'] == 1]
+            pot1_ph_mean = df_pakchoi_pot1['pH'].mean()
+            pot1_EC_mean = df_pakchoi_pot1['EC'].mean()
 
-            # Convert the difference to an accepted data type (string)
-            leaves_count_diff = str(latest_data['Leaves Count'] - initial_data['Leaves Count'])
+            telemetery1 = get_telemetries("UPMSO1001", "waterTemperature")
+            df_telemetery1 = pd.DataFrame(telemetery1['data'])
+            df_telemetery1['value'] = pd.to_numeric(df_telemetery1['value'], downcast="float")
+            pot1_watertemp_mean = round(df_telemetery1['value'].mean(), 2)
 
-            col1.metric("Latest Leaves Count", latest_data['Leaves Count'], leaves_count_diff)
-            col2.metric("Longest Leaf", f"{latest_data['Longest Leaf']} mm")
-            col3.metric("Plant Height", f"{latest_data['Plant Height(mm)']} mm")
-            st.subheader("Nutrient Information")
-            col11, col22, col33 = st.columns(3)
-            #--- loc -2 temporary because I spotted empty value for the latest data especially these two ---
-            col11.metric("pH", f"{df_filtersubpot_pakchoi['pH'].iloc[-2]}")
-            col22.metric("EC", f"{df_filtersubpot_pakchoi['EC'].iloc[-2]}")
+            pot1_plant_height_mean = df_pakchoi_pot1['Plant Height(mm)'].mean()
+            pot1_longest_leaves_mean = df_pakchoi_pot1['Longest Leaf'].mean()
+            pot1_leaves_count_mean = df_pakchoi_pot1['Leaves Count'].mean()
 
-            df_filtersubpot_pakchoi['Date'] = pd.to_datetime(df_filtersubpot_pakchoi['Date'], format='%d/%m/%Y', errors='coerce',
-                                                infer_datetime_format=True)
+            # Pot2
+            df_pakchoi_pot2 = df_pakchoi[df_pakchoi['Pot'] == 2]
+            pot2_ph_mean = df_pakchoi_pot2['pH'].mean()
+            pot2_EC_mean = df_pakchoi_pot2['EC'].mean()
+
+            telemetery2 = get_telemetries("UPMSO2001", "waterTemperature")
+            df_telemetery2 = pd.DataFrame(telemetery2['data'])
+            df_telemetery2['value'] = pd.to_numeric(df_telemetery2['value'], downcast="float")
+            pot2_watertemp_mean = round(df_telemetery2['value'].mean(), 2)
+
+            pot2_plant_height_mean = df_pakchoi_pot2['Plant Height(mm)'].mean()
+            pot2_longest_leaves_mean = df_pakchoi_pot2['Longest Leaf'].mean()
+            pot2_leaves_count_mean = df_pakchoi_pot2['Leaves Count'].mean()
+
+            col = st.columns([1, 2])
+
+            with col[0]:
+                st.markdown(
+                    f"""
+                    <div class="card" style="width: auto;">
+                      <div class="card-header">
+                        Featured
+                      </div>
+                      <div class="card-body">
+                          <div class="row">
+                            <div class="col">
+                                <strong>Number of Pots:</strong><br>
+                                <strong>Number of Sub pots:</strong><br>
+                                <strong>Number of Crop:</strong>
+                            </div>
+                            <div class="col text-right">
+                                {bil_pot}<br>
+                                {bil_subpot}<br>
+                                {bil_crop}<br>                                    
+                            </div>
+                          </div>
+                        </div>
+                    </div><br>                
+                    """, unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"""
+                    <div class="card" style="width: auto;">
+                      <div class="card-header">
+                        Growth in Average
+                      </div>
+                      <div class="card-body">
+                          <div class="row">
+                            <div class="col">
+                                <strong>Plant Height (mm):</strong><br>
+                                <strong>Leaf Length (mm):</strong><br>
+                                <strong>Number of Leaves:</strong>
+                            </div>
+                            <div class="col text-right">
+                                {round(plant_height_mean, 2)}<br>
+                                {round(longest_leaves_mean, 2)}<br>
+                                {int(round(leaves_count_mean, 0))}<br>                                    
+                            </div>
+                          </div>
+                        </div>
+                    </div>                
+                    """, unsafe_allow_html=True
+                )
+
+            with col[1]:
+                latitude = 2.992193566444384
+                longitude = 101.72348426648746
+                st.markdown(
+                    f"""
+                    <div class="card" style="width: auto;">
+                      <div class="card-header">
+                        Location
+                      </div>
+                      <div class="card-body">
+                          <iframe width="100%" height="350" src="https://www.openstreetmap.org/export/embed.html?bbox={longitude},{latitude},{longitude},{latitude}&layer=mapnik" frameborder="0"></iframe>
+                      </div>
+                    </div>                
+                    """, unsafe_allow_html=True
+                )
+
+            secondcol = st.columns(2)
+            with secondcol[0]:
+                st.markdown(
+                    f"""
+                    <div class="card" style="width: auto;">
+                      <div class="card-header">
+                        Sub-Pot 1
+                      </div>
+                      <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Average pH: <strong> {pot1_ph_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average EC: <strong> {pot1_EC_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Water Temperature: <strong> {pot1_watertemp_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Plant Height (mm): <strong> {pot1_plant_height_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Longest Leaves (mm): <strong> {pot1_longest_leaves_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Number of Leaves: <strong> {int(pot1_leaves_count_mean)} </strong></li>
+                      </ul>
+                    </div>                
+                    """, unsafe_allow_html=True
+                )
+
+            with secondcol[1]:
+                st.markdown(
+                    f"""
+                    <div class="card" style="width: auto;">
+                      <div class="card-header">
+                        Sub-Pot 2
+                      </div>
+                      <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Average pH: <strong> {pot2_ph_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average EC: <strong> {pot2_EC_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Water Temperature: <strong> {pot2_watertemp_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Plant Height (mm): <strong> {pot2_plant_height_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Longest Leaves (mm): <strong> {pot2_longest_leaves_mean:.2f} </strong></li>
+                        <li class="list-group-item">Average Number of Leaves: <strong> {int(pot2_leaves_count_mean)} </strong></li>
+                      </ul>
+                    </div>                
+                    """, unsafe_allow_html=True
+                )
+
+            st.divider()
+
+            thirdcol = st.columns(2)
+            with thirdcol[0]:
+                select_pot = st.selectbox("Select Pot", df_pakchoi['Pot'].unique())
+                df_filterpot_pakchoi = df_pakchoi[df_pakchoi['Pot'] == select_pot]
+            with thirdcol[1]:
+                select_subpot = st.selectbox("Select SubPot", df_filterpot_pakchoi['SubPot'].unique())
+                df_filtersubpot_pakchoi = df_filterpot_pakchoi[df_filterpot_pakchoi['SubPot'] == select_subpot]
+
+            df_filtersubpot_pakchoi['Date'] = pd.to_datetime(df_filtersubpot_pakchoi['Date'], format='%d/%m/%Y',
+                                                             errors='coerce',
+                                                    infer_datetime_format=True)
 
             col111, col222 = st.columns(2)
             with col111:
@@ -159,9 +249,95 @@ class Home2View:
                 st.plotly_chart(fig2)
 
 
-        else:
-            st.write("No data available for the selected SubPot.")
-
+        # col = st.columns(3)
+        # with col[0]:
+        #
+        #     if selected_farm == "Pok Choy Hydroponics":
+        #         with col[1]:
+        #             df_pakchoi = pd.DataFrame(pakchoi_model.get_actual_data())
+        #             # df_pakchoi = df_pakchoi.rename(columns=df_pakchoi.iloc[0]).drop(df_pakchoi.index[0])
+        #             # st.write(df_pakchoi)
+        #             select_pot = st.selectbox("Select Pot", df_pakchoi['Pot'].unique())
+        #         with col[2]:
+        #             df_filterpot_pakchoi = df_pakchoi[df_pakchoi['Pot'] == select_pot]
+        #             select_subpot = st.selectbox("Select SubPot", df_filterpot_pakchoi['SubPot'].unique())
+        #             df_filtersubpot_pakchoi = df_filterpot_pakchoi[df_filterpot_pakchoi['SubPot'] == select_subpot]
+        # # st.write(df_filtersubpot_pakchoi)
+        # st.subheader("Growth Information:")
+        # col1, col2, col3 = st.columns(3)
+        #
+        # if not df_filtersubpot_pakchoi.empty:
+        #     # Convert the columns to numeric
+        #     numeric_columns = ['Leaves Count', 'Longest Leaf', 'Plant Height(mm)', 'pH', 'EC']
+        #     # df_filtersubpot_pakchoi[numeric_columns] = df_filtersubpot_pakchoi[numeric_columns].apply(pd.to_numeric)
+        #     df_filtersubpot_pakchoi.loc[:, numeric_columns] = df_filtersubpot_pakchoi.loc[:, numeric_columns].apply(
+        #         pd.to_numeric)
+        #
+        #     initial_data = df_filtersubpot_pakchoi[numeric_columns].iloc[0]
+        #     latest_data = df_filtersubpot_pakchoi[numeric_columns].iloc[-1]
+        #
+        #     # Convert the difference to an accepted data type (string)
+        #     leaves_count_diff = str(latest_data['Leaves Count'] - initial_data['Leaves Count'])
+        #
+        #     col1.metric("Latest Leaves Count", latest_data['Leaves Count'], leaves_count_diff)
+        #     col2.metric("Longest Leaf", f"{latest_data['Longest Leaf']} mm")
+        #     col3.metric("Plant Height", f"{latest_data['Plant Height(mm)']} mm")
+        #     st.subheader("Nutrient Information")
+        #     col11, col22, col33 = st.columns(3)
+        #     #--- loc -2 temporary because I spotted empty value for the latest data especially these two ---
+        #     col11.metric("pH", f"{df_filtersubpot_pakchoi['pH'].iloc[-2]}")
+        #     col22.metric("EC", f"{df_filtersubpot_pakchoi['EC'].iloc[-2]}")
+        #
+        #     df_filtersubpot_pakchoi['Date'] = pd.to_datetime(df_filtersubpot_pakchoi['Date'], format='%d/%m/%Y', errors='coerce',
+        #                                         infer_datetime_format=True)
+        #
+        #     col111, col222 = st.columns(2)
+        #     with col111:
+        #         fig = go.Figure()
+        #         fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Plant Height(mm)'], name='Plant Height', mode='lines',
+        #                                  line=dict(color='blue')))
+        #         fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Longest Leaf'], name='Longest Leaf', mode='lines',
+        #                                  line=dict(color='green'), yaxis='y2'))
+        #
+        #         fig.update_layout(
+        #             title='Plant Height and Longest Leaf (mm) Progress',
+        #             xaxis_title='Date',
+        #             yaxis_title='Plant Height',
+        #             yaxis2=dict(
+        #                 title='Longest Leaf',
+        #                 overlaying='y',
+        #                 side='right'
+        #             )
+        #         )
+        #         st.plotly_chart(fig)
+        #
+        #     with col222:
+        #         # st.line_chart(df_filtersubpot_pakchoi, x='Date', y=['pH', 'EC'])
+        #         fig2 = go.Figure()
+        #         fig2.add_trace(
+        #             go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['pH'],
+        #                        name='pH', mode='lines',
+        #                        line=dict(color='orange')))
+        #         fig2.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['EC'],
+        #                                  name='EC', mode='lines',
+        #                                  line=dict(color='purple'), yaxis='y2'))
+        #
+        #         fig2.update_layout(
+        #             title='pH and EC Over Time',
+        #             xaxis_title='Date',
+        #             yaxis_title='pH',
+        #             yaxis2=dict(
+        #                 title='EC',
+        #                 overlaying='y',
+        #                 side='right'
+        #             )
+        #         )
+        #         st.plotly_chart(fig2)
+        #
+        #
+        # else:
+        #     st.write("No data available for the selected SubPot.")
+        #
 
 
 
