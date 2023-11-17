@@ -1,5 +1,3 @@
-# app.py
-
 from models.user_model import UserModel
 from models.pakchoi_model import PakchoiModel
 from views.login_view import LoginView
@@ -8,6 +6,7 @@ from views.home2_view import Home2View
 from views.report_view import ReportView
 from views.farm_view import FarmView
 import streamlit as st
+from PIL import Image
 
 # Instantiate models
 user_model = UserModel("admin", "password")
@@ -23,7 +22,9 @@ farm_view = FarmView()
 
 # Set up Streamlit app
 def main():
-    st.sidebar.title("MyAgriDT")
+    # st.sidebar.title("MyAgriDT")
+    image = Image.open('assets/logo.png')
+    st.sidebar.image(image.resize((150, 50)))
 
     # Display login/logout based on user authentication
     if "authenticated" not in st.session_state:

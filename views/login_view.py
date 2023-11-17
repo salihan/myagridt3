@@ -1,5 +1,4 @@
-# login_view.py
-
+from PIL import Image
 import streamlit as st
 
 class LoginView:
@@ -7,6 +6,8 @@ class LoginView:
         self.user_model = user_model
 
     def render(self):
+        image = Image.open('assets/logo.png')
+        st.image(image.resize((350, 125)))
         st.title('Login')
 
         username = st.text_input('Username')
