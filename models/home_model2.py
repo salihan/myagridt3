@@ -13,9 +13,11 @@ class HomeModel2:
         self.session = requests.Session()
 
         self.actual_data_url = 'https://docs.google.com/spreadsheets/d/1WKOfNmt9KYKDHxaR3c_uO3YSTpYzzup85Wsde5OkTic/gviz/tq?tqx=out:csv&gid=0'
+        self.pot_risk_url = 'https://docs.google.com/spreadsheets/d/1qQeM-1s32JP0GBtFDnIto6xmutq3R9iS7QmvIhFOx1k/gviz/tq?tqx=out:csv&gid=0'
 
         # Load data or download and cache if not available
         self.actual_data = self.load_data(self.actual_data_url)
+        self.pot_risk_url = self.load_data((self.pot_risk_url))
 
     def load_data(self, url):
         # Check if data is already cached in the session
@@ -39,3 +41,6 @@ class HomeModel2:
 
     def get_actual_data(self):
         return self.actual_data
+
+    def get_pot_risk(self):
+        return self.pot_risk_url

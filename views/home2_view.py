@@ -7,6 +7,7 @@ from models.pakchoi_model import PakchoiModel
 from models.farm_model import get_telemetries
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+import datetime
 
 rice_model = RiceModel()
 pakchoi_model = PakchoiModel()
@@ -38,7 +39,18 @@ class Home2View:
 
         data = self.home_model2.get_actual_data()
         df_home = pd.DataFrame(data)
-        st.dataframe(df_home.iloc[:, 0:5])
+        df_home = df_home.iloc[:, 0:6]
+
+        # Function to apply styling based on 'Risk Level'
+        def style_risk_level(val):
+            color = 'red' if val == 'High Risk' else ''
+            return f'color: {color}'
+
+        # Apply styling to the entire DataFrame
+        styled_df = df_home.style.applymap(style_risk_level, subset=['Risk Level'])
+
+        # Display the styled DataFrame
+        st.dataframe(styled_df, hide_index=True)
 
         st.markdown("""
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
@@ -92,7 +104,7 @@ class Home2View:
             with col[0]:
                 st.markdown(
                     f"""
-                    <div class="card" style="width: auto;">
+                    <div class="card text-dark bg-light" style="width: auto;">
                       <div class="card-header">
                         Featured
                       </div>
@@ -115,7 +127,7 @@ class Home2View:
                 )
                 st.markdown(
                     f"""
-                    <div class="card" style="width: auto;">
+                    <div class="card text-dark bg-light" style="width: auto;">
                       <div class="card-header">
                         Growth in Average
                       </div>
@@ -142,7 +154,7 @@ class Home2View:
                 longitude = 101.72348426648746
                 st.markdown(
                     f"""
-                    <div class="card" style="width: auto;">
+                    <div class="card text-dark bg-light" style="width: auto;">
                       <div class="card-header">
                         Location
                       </div>
@@ -157,7 +169,7 @@ class Home2View:
             with secondcol[0]:
                 st.markdown(
                     f"""
-                    <div class="card" style="width: auto;">
+                    <div class="card text-dark bg-light" style="width: auto;">
                       <div class="card-header">
                         Sub-Pot 1
                       </div>
@@ -176,7 +188,7 @@ class Home2View:
             with secondcol[1]:
                 st.markdown(
                     f"""
-                    <div class="card" style="width: auto;">
+                    <div class="card text-dark bg-light" style="width: auto;">
                       <div class="card-header">
                         Sub-Pot 2
                       </div>
@@ -225,203 +237,86 @@ class Home2View:
             st.divider()
             st.subheader('Growth')
 
-            groupedPot = df_pakchoi.groupby('Pot')[['Plant Height(mm)', 'Longest Leaf']].mean()
+            # Convert 'Date' column to datetime format
+            df_pakchoi['Date'] = pd.to_datetime(df_pakchoi['Date'], format='%d/%m/%Y', errors='coerce',
+                                                infer_datetime_format=True)
 
-            # Create a Matplotlib figure and axis
-            fig, ax = plt.subplots(figsize=(6, 3))
+            # Create a Streamlit date range picker
+            date_range = st.date_input('Select Date Range:',
+                                       value=[(datetime.datetime.now() - datetime.timedelta(days=7)).date(),
+                                              datetime.datetime.now().date()])
 
-            # Set the background color of the Matplotlib plot to #F0F8EA
-            ax.set_facecolor('#F0F8EA')
-            fig.set_facecolor('#F0F8EA')
+            # Convert selected date range to datetime format
+            start_date, end_date = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
 
-            # Plot the results
-            groupedPot.plot(kind='bar', ax=ax)
-            plt.title('Average Plant Height and Longest Leaf by Pot')
-            plt.xlabel('Pot')
-            plt.ylabel('Average Value')
-            plt.xticks(rotation=0)  # Rotate x-axis labels if needed
-            plt.legend(loc='best')  # Show the legend
+            # Filter data based on the selected date range
+            filtered_data = df_pakchoi[(df_pakchoi['Date'] >= start_date) & (df_pakchoi['Date'] <= end_date)]
 
-            # Display the Matplotlib plot in your Streamlit app
-            st.pyplot(fig)
+            # Group the filtered data
+            groupedPot = filtered_data.groupby('Pot')[['Plant Height(mm)', 'Longest Leaf']].mean().reset_index()
 
+            # Create a Plotly figure
+            fig = go.Figure()
 
-            groupedSubPot = df_pakchoi.groupby('SubPot')[['Plant Height(mm)', 'Longest Leaf']].mean()
+            fig.add_trace(go.Bar(
+                x=groupedPot['Pot'], y=groupedPot['Plant Height(mm)'],
+                name='Plant Height',
+                marker_color='#1f77b4',
+                hovertemplate='Pot %{x}<br>Plant Height: %{y:.3f} mm'
+            ))
+            fig.add_trace(go.Bar(
+                x=groupedPot['Pot'], y=groupedPot['Longest Leaf'],
+                name='Longest Leaf',
+                marker_color='#ff7f0e',
+                hovertemplate='Pot %{x}<br>Longest Leaf: %{y:.3f} mm'
+            ))
 
-            # Create a Matplotlib figure and axis
-            fig, ax = plt.subplots(figsize=(6, 3))
+            # Update layout
+            fig.update_layout(
+                title=f'Average Plant Height and Longest Leaf by Pot ({start_date.date()} to {end_date.date()})',
+                xaxis_title='Pot',
+                yaxis_title='Average Value',
+                barmode='group',  # Group bars for each Pot
+                template='plotly_dark',  # Set dark mode template
+            )
 
-            # Set the background color of the Matplotlib plot to #F0F8EA
-            ax.set_facecolor('#F0F8EA')
-            fig.set_facecolor('#F0F8EA')
+            # Show the Plotly figure in your Streamlit app
+            st.plotly_chart(fig, use_container_width=True)
 
-            # Plot the results
-            groupedSubPot.plot(kind='bar', ax=ax)
-            print(groupedSubPot)
-            plt.title('Average Plant Height and Longest Leaf by Sub-Pot')
-            plt.xlabel('Sub-Pot')
-            plt.ylabel('Average Value')
-            # Define the x-label locations and labels (show every second label)
-            x_labels = groupedSubPot.index[::2]  # Select every second label
-            x_locations = range(0, len(groupedSubPot), 2)  # Corresponding x-locations
-            # Set the x-labels and their positions
-            plt.xticks(x_locations, x_labels)
-            plt.xticks(rotation=0)  # Rotate x-axis labels if needed
-            plt.xticks(fontsize=6)
-            plt.legend(loc='best')  # Show the legend
+            # Group the data for 'SubPot' within the selected date range
+            groupedSubPot = filtered_data.groupby('SubPot')[['Plant Height(mm)', 'Longest Leaf']].mean().reset_index()
 
-            # Display the Matplotlib plot in your Streamlit app
-            st.pyplot(fig)
+            # Create a Plotly figure
+            fig = go.Figure()
 
-            # fig = go.Figure()
-            # fig.add_trace(go.Bar(x=groupedPot.index,
-            #                      y=groupedPot['Plant Height(mm)'],
-            #                      name='Average Plant Height (mm)'))
-            # fig.add_trace(go.Bar(x=groupedPot.index,
-            #                      y=groupedPot['Longest Leaf'],
-            #                      name='Average Longest Leaf'))
-            #
-            # fig.update_layout(barmode='group',
-            #                   xaxis_title='Pot',
-            #                   yaxis_title='Average Value',
-            #                   title='Average Plant Height and Longest Leaf by Pot')
-            #
-            # iplot(fig)
+            # Add bar traces for Plant Height and Longest Leaf
+            # Add bar traces for Plant Height and Longest Leaf with custom hover text
+            fig.add_trace(go.Bar(
+                x=groupedSubPot['SubPot'],
+                y=groupedSubPot['Plant Height(mm)'],
+                name='Plant Height',
+                marker_color='#1f77b4',
+                hovertemplate='SubPot %{x}<br>Plant Height: %{y:.3f} mm'
+            ))
+            fig.add_trace(go.Bar(
+                x=groupedSubPot['SubPot'],
+                y=groupedSubPot['Longest Leaf'],
+                name='Longest Leaf',
+                marker_color='#ff7f0e',
+                hovertemplate='SubPot %{x}<br>Longest Leaf: %{y:.3f} mm'
+            ))
 
+            # Update layout
+            fig.update_layout(
+                title=f'Average Plant Height and Longest Leaf by Sub-Pot ({start_date.date()} to {end_date.date()})',
+                xaxis_title='Sub-Pot',
+                yaxis_title='Average Value',
+                barmode='group',  # Group bars for each Sub-Pot
+                template='plotly_dark',  # Set dark mode template
+            )
 
-            # col111, col222 = st.columns(2)
-            # with col111:
-            #     fig = go.Figure()
-            #     fig.add_trace(go.Scatter(x=df_filterpot_pakchoi['Date'], y=df_filterpot_pakchoi['Plant Height(mm)'], name='Plant Height', mode='lines',
-            #                              line=dict(color='blue')))
-            #     fig.add_trace(go.Scatter(x=df_filterpot_pakchoi['Date'], y=df_filterpot_pakchoi['Longest Leaf'], name='Longest Leaf', mode='lines',
-            #                              line=dict(color='green'), yaxis='y2'))
-            #
-            #     fig.update_layout(
-            #         title='Plant Height and Longest Leaf (mm) Progress',
-            #         xaxis_title='Date',
-            #         yaxis_title='Plant Height',
-            #         yaxis2=dict(
-            #             title='Longest Leaf',
-            #             overlaying='y',
-            #             side='right'
-            #         )
-            #     )
-            #     st.plotly_chart(fig)
-            #
-            # with col222:
-            #     # st.line_chart(df_filtersubpot_pakchoi, x='Date', y=['pH', 'EC'])
-            #     fig2 = go.Figure()
-            #     fig2.add_trace(
-            #         go.Scatter(x=df_filterpot_pakchoi['Date'], y=df_filterpot_pakchoi['pH'],
-            #                    name='pH', mode='lines',
-            #                    line=dict(color='orange')))
-            #     fig2.add_trace(go.Scatter(x=df_filterpot_pakchoi['Date'], y=df_filterpot_pakchoi['EC'],
-            #                              name='EC', mode='lines',
-            #                              line=dict(color='purple'), yaxis='y2'))
-            #
-            #     fig2.update_layout(
-            #         title='pH and EC Over Time',
-            #         xaxis_title='Date',
-            #         yaxis_title='pH',
-            #         yaxis2=dict(
-            #             title='EC',
-            #             overlaying='y',
-            #             side='right'
-            #         )
-            #     )
-            #     st.plotly_chart(fig2)
-
-
-        # col = st.columns(3)
-        # with col[0]:
-        #
-        #     if selected_farm == "Pok Choy Hydroponics":
-        #         with col[1]:
-        #             df_pakchoi = pd.DataFrame(pakchoi_model.get_actual_data())
-        #             # df_pakchoi = df_pakchoi.rename(columns=df_pakchoi.iloc[0]).drop(df_pakchoi.index[0])
-        #             # st.write(df_pakchoi)
-        #             select_pot = st.selectbox("Select Pot", df_pakchoi['Pot'].unique())
-        #         with col[2]:
-        #             df_filterpot_pakchoi = df_pakchoi[df_pakchoi['Pot'] == select_pot]
-        #             select_subpot = st.selectbox("Select SubPot", df_filterpot_pakchoi['SubPot'].unique())
-        #             df_filtersubpot_pakchoi = df_filterpot_pakchoi[df_filterpot_pakchoi['SubPot'] == select_subpot]
-        # # st.write(df_filtersubpot_pakchoi)
-        # st.subheader("Growth Information:")
-        # col1, col2, col3 = st.columns(3)
-        #
-        # if not df_filtersubpot_pakchoi.empty:
-        #     # Convert the columns to numeric
-        #     numeric_columns = ['Leaves Count', 'Longest Leaf', 'Plant Height(mm)', 'pH', 'EC']
-        #     # df_filtersubpot_pakchoi[numeric_columns] = df_filtersubpot_pakchoi[numeric_columns].apply(pd.to_numeric)
-        #     df_filtersubpot_pakchoi.loc[:, numeric_columns] = df_filtersubpot_pakchoi.loc[:, numeric_columns].apply(
-        #         pd.to_numeric)
-        #
-        #     initial_data = df_filtersubpot_pakchoi[numeric_columns].iloc[0]
-        #     latest_data = df_filtersubpot_pakchoi[numeric_columns].iloc[-1]
-        #
-        #     # Convert the difference to an accepted data type (string)
-        #     leaves_count_diff = str(latest_data['Leaves Count'] - initial_data['Leaves Count'])
-        #
-        #     col1.metric("Latest Leaves Count", latest_data['Leaves Count'], leaves_count_diff)
-        #     col2.metric("Longest Leaf", f"{latest_data['Longest Leaf']} mm")
-        #     col3.metric("Plant Height", f"{latest_data['Plant Height(mm)']} mm")
-        #     st.subheader("Nutrient Information")
-        #     col11, col22, col33 = st.columns(3)
-        #     #--- loc -2 temporary because I spotted empty value for the latest data especially these two ---
-        #     col11.metric("pH", f"{df_filtersubpot_pakchoi['pH'].iloc[-2]}")
-        #     col22.metric("EC", f"{df_filtersubpot_pakchoi['EC'].iloc[-2]}")
-        #
-        #     df_filtersubpot_pakchoi['Date'] = pd.to_datetime(df_filtersubpot_pakchoi['Date'], format='%d/%m/%Y', errors='coerce',
-        #                                         infer_datetime_format=True)
-        #
-        #     col111, col222 = st.columns(2)
-        #     with col111:
-        #         fig = go.Figure()
-        #         fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Plant Height(mm)'], name='Plant Height', mode='lines',
-        #                                  line=dict(color='blue')))
-        #         fig.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['Longest Leaf'], name='Longest Leaf', mode='lines',
-        #                                  line=dict(color='green'), yaxis='y2'))
-        #
-        #         fig.update_layout(
-        #             title='Plant Height and Longest Leaf (mm) Progress',
-        #             xaxis_title='Date',
-        #             yaxis_title='Plant Height',
-        #             yaxis2=dict(
-        #                 title='Longest Leaf',
-        #                 overlaying='y',
-        #                 side='right'
-        #             )
-        #         )
-        #         st.plotly_chart(fig)
-        #
-        #     with col222:
-        #         # st.line_chart(df_filtersubpot_pakchoi, x='Date', y=['pH', 'EC'])
-        #         fig2 = go.Figure()
-        #         fig2.add_trace(
-        #             go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['pH'],
-        #                        name='pH', mode='lines',
-        #                        line=dict(color='orange')))
-        #         fig2.add_trace(go.Scatter(x=df_filtersubpot_pakchoi['Date'], y=df_filtersubpot_pakchoi['EC'],
-        #                                  name='EC', mode='lines',
-        #                                  line=dict(color='purple'), yaxis='y2'))
-        #
-        #         fig2.update_layout(
-        #             title='pH and EC Over Time',
-        #             xaxis_title='Date',
-        #             yaxis_title='pH',
-        #             yaxis2=dict(
-        #                 title='EC',
-        #                 overlaying='y',
-        #                 side='right'
-        #             )
-        #         )
-        #         st.plotly_chart(fig2)
-        #
-        #
-        # else:
-        #     st.write("No data available for the selected SubPot.")
-        #
+            # Show the Plotly figure in your Streamlit app
+            st.plotly_chart(fig, use_container_width=True)
 
 
 
