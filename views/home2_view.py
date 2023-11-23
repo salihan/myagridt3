@@ -35,7 +35,7 @@ class Home2View:
         return [''] * len(row)
 
     def render(self):
-        st.title('Farms')
+        st.title('Farm')
 
         data = self.home_model2.get_actual_data()
         df_home = pd.DataFrame(data)

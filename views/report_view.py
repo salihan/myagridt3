@@ -52,7 +52,7 @@ class ReportView:
             df_raw_rice = rice_model.get_data()
             st.write(df_raw_rice)
         elif selected_farm_name.strip() == "Pok Choy Hydroponics":
-            st.subheader("Farm: Pak Choy Hydrophonics")
+            st.subheader("Farm: Pak Choy Hydrophonic")
 
             # Apply styling to the entire DataFrame
             styled_df = df_potrisk.style.apply(self.style_row, axis=1, subset=['Risk Level', 'Risk Level of Plant height',
